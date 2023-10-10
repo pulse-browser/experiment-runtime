@@ -1,0 +1,13 @@
+diff --git a/services/settings/dumps/gen_last_modified.py b/services/settings/dumps/gen_last_modified.py
+index 5d044efb2cfd4795f028d53b0d494e5598d893af..682703f00917052aa8b1e02d659e99087a35bd06 100644
+--- a/services/settings/dumps/gen_last_modified.py
++++ b/services/settings/dumps/gen_last_modified.py
+@@ -44,6 +44,8 @@ def main(output):
+     The validity of the JSON file is verified through unit tests at
+     services/settings/test/unit/test_remote_settings_dump_lastmodified.js
+     """
++    return
++
+     # The following build targets currently use RemoteSettings dumps:
+     # Firefox               https://searchfox.org/mozilla-central/rev/94d6086481754e154b6f042820afab6bc9900a30/browser/installer/package-manifest.in#281-285        # NOQA: E501
+     # Firefox for Android   https://searchfox.org/mozilla-central/rev/94d6086481754e154b6f042820afab6bc9900a30/mobile/android/installer/package-manifest.in#88-91   # NOQA: E501

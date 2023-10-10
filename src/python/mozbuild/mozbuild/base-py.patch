@@ -1,0 +1,15 @@
+diff --git a/python/mozbuild/mozbuild/base.py b/python/mozbuild/mozbuild/base.py
+index f90f14ce11f7f4ef1c34c7806a75dcb9d3e1eb46..1fdf1040b7a0a8757486cdae8bd1f6bbceac70c0 100644
+--- a/python/mozbuild/mozbuild/base.py
++++ b/python/mozbuild/mozbuild/base.py
+@@ -1038,9 +1038,7 @@ class MachCommandConditions(object):
+     @staticmethod
+     def has_build_or_shell(cls):
+         """Must have a build or a shell build."""
+-        return MachCommandConditions.has_build(cls) or MachCommandConditions.is_jsshell(
+-            cls
+-        )
++        return True
+ 
+     @staticmethod
+     def is_hg(cls):

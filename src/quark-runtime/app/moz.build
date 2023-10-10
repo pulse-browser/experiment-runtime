@@ -1,0 +1,60 @@
+# -*- Mode: python; c-basic-offset: 4; indent-tabs-mode: nil; tab-width: 40 -*-
+# vim: set filetype=python:
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+DIRS += ['profile']
+
+GeckoProgram('quark-runtime')
+
+SOURCES += [
+    'QuarkRuntime.cpp',
+]
+
+DEFINES['XULRUNNER_PROGNAME'] = '"quark-runtime"'
+if CONFIG['MOZ_DEBUG']:
+    DEFINES['DEBUG'] = True
+
+DIST_SUBDIR = ""
+
+LOCAL_INCLUDES += [
+    "!/build",
+    "/toolkit/xre",
+    "/xpcom/base",
+    "/xpcom/build",
+]
+
+if CONFIG['_MSC_VER']:
+    # Always enter a Windows program through wmain, whether or not we're
+    # a console application.
+    WIN32_EXE_LDFLAGS += ['-ENTRY:wmainCRTStartup']
+
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    RCINCLUDE = 'splash.rc'
+    OS_LIBS += [
+        'comctl32',
+        'comdlg32',
+        'uuid',
+        'shell32',
+        'ole32',
+        'oleaut32',
+        'version',
+        'winspool',
+    ]
+
+DisableStlWrapping()
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    BRANDING_FILES += [
+        'document.ico',
+        'xulrunner.ico',
+    ]
+
+if CONFIG['MOZ_WIDGET_GTK']:
+    BRANDING_FILES += [
+        'default16.png',
+        'default32.png',
+        'default48.png',
+    ]

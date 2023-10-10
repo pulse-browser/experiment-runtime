@@ -1,0 +1,4 @@
+ac_add_options --with-ccache=sccache
+ac_add_options --without-wasm-sandboxed-libraries
+
+. $topsrcdir/quark-runtime/config/mozconfig
