@@ -125,3 +125,13 @@ jobs:
         with:
           name: runtime.linux.tar.bz2
           path: ./runtime.linux.tar.bz2
+            
+      - name: Make artifact available
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Artifact Build"
+          files: |
+            runtime.linux.tar.bz2
