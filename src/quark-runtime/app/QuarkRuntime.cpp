@@ -2,6 +2,16 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+// Global todos:
+// These are things that we don't care enough about to do now, but would
+// be nice in the future
+
+// Windows todos:
+// TODO: Implement dll blocklist
+
+// macOS todos:
+// TODO: Allow disabling content processes on macOS
+
 #include "mozilla/Bootstrap.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +44,13 @@
 #include "BinaryPath.h"
 
 #include "nsXPCOMPrivate.h" // for MAXPATHLEN and XPCOM_DLL
+
+// NOTE: In firefox this is wrapped in a check that excludes cocoa or android
+// because we are not targeting either platform right now, I am going 
+// exclude that check
+//
+// This is the required include for content process stuff
+#include "../../ipc/contentproc/plugin-container.cpp"
 
 using namespace mozilla;
 
@@ -81,15 +98,11 @@ static bool IsArg(const char *arg, const char *s)
     return !strcasecmp(arg, s);
   }
 
-#if defined(XP_WIN)
-  if (*arg == '/')
-    return !strcasecmp(++arg, s);
-#endif
-
   return false;
 }
 
 // TODO: Bring back application file parsing
+//
 // static nsresult
 // GetGREVersion(const char *argv0,
 //               nsACString *aMilestone,
@@ -154,31 +167,88 @@ static void Usage(const char *argv0)
 
 Bootstrap::UniquePtr gBootstrap;
 
-int main(int argc, char *argv[])
-{
+static nsresult initXPCOMGlue(LibLoadingStrategy libLoadingStrategy) {
+  if (gBootstrap) return NS_OK;
+
   UniqueFreePtr<char> exePathPtr = BinaryPath::Get();
   if (!exePathPtr)
   {
     Output(true, "Couldn't calculate the application directory.\n");
-    return 255;
+    return NS_ERROR_FAILURE;
   }
 
   char *exePath = exePathPtr.get();
 
   char *lastSlash = strrchr(exePath, XPCOM_FILE_PATH_SEPARATOR[0]);
   if (!lastSlash || (size_t(lastSlash - exePath) > MAXPATHLEN - sizeof(XPCOM_DLL) - 1))
-    return 255;
+    return NS_ERROR_FAILURE;
 
   strcpy(++lastSlash, XPCOM_DLL);
 
-  auto bootstrapResult = mozilla::GetBootstrap(exePath, LibLoadingStrategy::NoReadAhead);
+  auto bootstrapResult = mozilla::GetBootstrap(exePath, libLoadingStrategy);
   if (bootstrapResult.isErr())
   {
     Output(true, "Couldn't load XPCOM.\n");
-    return 255;
+    return NS_ERROR_FAILURE;
   }
 
   gBootstrap = bootstrapResult.unwrap();
+
+  gBootstrap->NS_LogInit();
+
+  return NS_OK;
+}
+
+int main(int argc, char *argv[])
+{
+#if defined(MOZ_ENABLE_FORKSERVER)
+  if (strcmp(argv[argc - 1], "forkserver") == 0)
+  {
+    nsresult rv = InitXPCOMGlue(LibLoadingStrategy::NoReadAhead);
+    if (NS_FAILED(rv))
+    {
+      return 255;
+    }
+
+    // Run a fork server in this process, single thread.  When it
+    // returns, it means the fork server have been stopped or a new
+    // content process is created.
+    //
+    // For the later case, XRE_ForkServer() will return false, running
+    // in a content process just forked from the fork server process.
+    // argc & argv will be updated with the values passing from the
+    // chrome process.  With the new values, this function
+    // continues the reset of the code acting as a content process.
+    if (gBootstrap->XRE_ForkServer(&argc, &argv))
+    {
+      // Return from the fork server in the fork server process.
+      // Stop the fork server.
+      gBootstrap->NS_LogTerm();
+      return 0;
+    }
+    // In a content process forked from the fork server.
+    // Start acting as a content process.
+  }
+#endif
+
+  if (argc > 1 && IsArg(argv[1], "contentproc")) {
+    // Set the process type. We don't remove the arg here as that will be done
+    // later in common code.
+    SetGeckoProcessType(argv[argc - 1]);
+
+    nsresult initXPCOMGlueResult = initXPCOMGlue(LibLoadingStrategy::NoReadAhead);
+    if (NS_FAILED(initXPCOMGlueResult)) {
+      Output(true, "Failed to load xpcom glue");
+      return 255;
+    }
+
+    int contentProcMainResult = content_process_main(gBootstrap.get(), argc, argv);
+
+    // InitXPCOMGlue calls NS_LogInit, so we need to balance it here.
+    gBootstrap->NS_LogTerm();
+
+    return contentProcMainResult;
+  }
 
   if (argc > 1 && (IsArg(argv[1], "h") ||
                    IsArg(argv[1], "help") ||
@@ -271,5 +341,16 @@ int main(int argc, char *argv[])
     config.appDataPath = "quark-runtime";
   }
 
-  return gBootstrap->XRE_main(argc, argv, config);
+  nsresult initXPCOMGlueResult = initXPCOMGlue(LibLoadingStrategy::NoReadAhead);
+  if (NS_FAILED(initXPCOMGlueResult)) {
+    Output(true, "Failed to load xpcom glue");
+    return 255;
+  }
+
+  int xreMainResult = gBootstrap->XRE_main(argc, argv, config);
+
+  gBootstrap->NS_LogTerm();
+  gBootstrap.reset();
+
+  return xreMainResult;
 }
