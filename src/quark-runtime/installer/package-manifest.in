@@ -157,6 +157,7 @@
 #endif
 
 ; JavaScript components
+@RESPATH@/components/BrowserComponents.manifest
 @RESPATH@/components/extensions.manifest
 #ifdef MOZ_UPDATER
 @RESPATH@/components/nsUpdateService.manifest

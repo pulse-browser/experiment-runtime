@@ -20,5 +20,7 @@ MOZ_MEDIA_NAVIGATOR=1
 MOZ_SERVICES_HEALTHREPORT=1
 MOZ_DISABLE_EXPORT_JS=1
 
+MOZ_APP_ID={ec8030f7-c20a-464f-9b0e-13a3a9e97384}
+
 # Include the DevTools client, not just the server (which is the default)
 MOZ_DEVTOOLS=all
