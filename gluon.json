@@ -5,7 +5,7 @@
   "binaryName": "experiment-browser",
   "version": {
     "product": "firefox",
-    "version": "118.0.1"
+    "version": "119.0"
   },
   "buildOptions": {
     "windowsUseSymbolicLinks": false
@@ -29,7 +29,9 @@
     }
   },
   "license": {
-    "ignoredFiles": [".*\\.json"],
+    "ignoredFiles": [
+      ".*\\.json"
+    ],
     "licenseType": "MPL-2.0"
   }
 }
