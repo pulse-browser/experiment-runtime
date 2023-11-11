@@ -7,5 +7,7 @@
 # to the top of your mozconfig file.
 
 ac_add_options --enable-application=quark-runtime
-ac_add_options --with-app-name=quark-runtime
-ac_add_options --with-xulrunner-stub-name=quark-runtime-stub
+ac_add_options --with-app-name=experiment-runtime
+
+export MOZ_APP_VENDOR=Fushra
+export MOZ_APP_DISPLAYNAME=Experiment
