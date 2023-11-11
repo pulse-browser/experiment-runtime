@@ -118,14 +118,14 @@ jobs:
 
       - name: Rename artifacts
         run: |
-          mv dist/quark-runtime-*.tar.bz2 "runtime.linux.tar.bz2"
+          mv dist/experiment-runtime-*.tar.bz2 "runtime.linux.tar.bz2"
 
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
           name: runtime.linux.tar.bz2
           path: ./runtime.linux.tar.bz2
-            
+
       - name: Make artifact available
         uses: "marvinpinto/action-automatic-releases@latest"
         with:

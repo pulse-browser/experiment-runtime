@@ -4,5 +4,7 @@
 
 # This file is included at the bottom of all xulrunner mozconfigs
 
+ac_add_options --enable-update-channel=dev
+
 . "$topsrcdir/build/mozconfig.common.override"
 . "$topsrcdir/build/mozconfig.cache"

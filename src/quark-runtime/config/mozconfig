@@ -11,3 +11,4 @@ ac_add_options --with-app-name=experiment-runtime
 
 export MOZ_APP_VENDOR=Fushra
 export MOZ_APP_DISPLAYNAME=Experiment
+export MOZ_UPDATE_CHANNEL=dev
