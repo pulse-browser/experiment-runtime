@@ -1,0 +1,15 @@
+diff --git a/toolkit/components/extensions/child/ext-test.js b/toolkit/components/extensions/child/ext-test.js
+index a4178b63ff30a8956cfa71fb9e3c3bda93e13d33..b2230e32fe99abcb49e29df72b71dd610695ff42 100644
+--- a/toolkit/components/extensions/child/ext-test.js
++++ b/toolkit/components/extensions/child/ext-test.js
+@@ -188,10 +188,6 @@ this.test = class extends ExtensionAPI {
+       }
+     }
+ 
+-    if (!Cu.isInAutomation && !isXpcshell) {
+-      return { test: {} };
+-    }
+-
+     return {
+       test: {
+         withHandlingUserInput(callback) {
