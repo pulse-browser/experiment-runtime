@@ -5,7 +5,7 @@
   "binaryName": "experiment-browser",
   "version": {
     "product": "firefox",
-    "version": "127.0"
+    "version": "131.0.3"
   },
   "buildOptions": {
     "windowsUseSymbolicLinks": false
