@@ -6,7 +6,7 @@ name: Create Artifact
 on:
   # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: ["main"]
+    branches: ["*"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -128,6 +128,7 @@ jobs:
 
       - name: Make artifact available
         uses: "marvinpinto/action-automatic-releases@latest"
+        if: github.ref == 'refs/heads/main'
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
