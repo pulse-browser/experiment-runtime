@@ -12,6 +12,7 @@
 // macOS todos:
 // TODO: Allow disabling content processes on macOS
 
+#include "XREChildData.h"
 #include "mozilla/Bootstrap.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,15 +25,15 @@
 #endif
 
 #include "nsAppRunner.h"
-#include "nsIFile.h"
 #include "nsCOMPtr.h"
-#include "nsMemory.h"
 #include "nsCRTGlue.h"
+#include "nsIFile.h"
+#include "nsMemory.h"
 // #include "nsStringAPI.h"
 // #include "nsServiceManagerUtils.h"
 #include "plstr.h"
-#include "prprf.h"
 #include "prenv.h"
+#include "prprf.h"
 // #include "nsINIParser.h" GRE Versioning stuff that needs to be in libxul :(
 #include "application.ini.h"
 
@@ -45,12 +46,8 @@
 
 #include "nsXPCOMPrivate.h" // for MAXPATHLEN and XPCOM_DLL
 
-// NOTE: In firefox this is wrapped in a check that excludes cocoa or android
-// because we are not targeting either platform right now, I am going 
-// exclude that check
-//
-// This is the required include for content process stuff
-#include "../../ipc/contentproc/plugin-container.cpp"
+// NOTE: Firefox does not allow content processes on android and coccoa.
+// We target neither, so we leave our content process code outside of macros
 
 using namespace mozilla;
 
@@ -63,14 +60,14 @@ using namespace mozilla;
  * @param fmt
  *        printf-style format string followed by arguments.
  */
-static void Output(bool isError, const char *fmt, ...)
-{
+static void Output(bool isError, const char *fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
 
 #if (defined(XP_WIN) && !MOZ_WINCONSOLE)
   wchar_t msg[2048];
-  _vsnwprintf(msg, sizeof(msg) / sizeof(msg[0]), NS_ConvertUTF8toUTF16(fmt).get(), ap);
+  _vsnwprintf(msg, sizeof(msg) / sizeof(msg[0]),
+              NS_ConvertUTF8toUTF16(fmt).get(), ap);
 
   UINT flags = MB_OK;
   if (isError)
@@ -89,10 +86,8 @@ static void Output(bool isError, const char *fmt, ...)
 /**
  * Return true if |arg| matches the given argument name.
  */
-static bool IsArg(const char *arg, const char *s)
-{
-  if (*arg == '-')
-  {
+static bool IsArg(const char *arg, const char *s) {
+  if (*arg == '-') {
     if (*++arg == '-')
       ++arg;
     return !strcasecmp(arg, s);
@@ -140,8 +135,7 @@ static bool IsArg(const char *arg, const char *s)
 //   return NS_OK;
 // }
 
-static void Usage(const char *argv0)
-{
+static void Usage(const char *argv0) {
   // nsAutoCString milestone;
   // GetGREVersion(argv0, &milestone, nullptr);
 
@@ -168,11 +162,11 @@ static void Usage(const char *argv0)
 Bootstrap::UniquePtr gBootstrap;
 
 static nsresult initXPCOMGlue(LibLoadingStrategy libLoadingStrategy) {
-  if (gBootstrap) return NS_OK;
+  if (gBootstrap)
+    return NS_OK;
 
   UniqueFreePtr<char> exePathPtr = BinaryPath::Get();
-  if (!exePathPtr)
-  {
+  if (!exePathPtr) {
     Output(true, "Couldn't calculate the application directory.\n");
     return NS_ERROR_FAILURE;
   }
@@ -180,14 +174,14 @@ static nsresult initXPCOMGlue(LibLoadingStrategy libLoadingStrategy) {
   char *exePath = exePathPtr.get();
 
   char *lastSlash = strrchr(exePath, XPCOM_FILE_PATH_SEPARATOR[0]);
-  if (!lastSlash || (size_t(lastSlash - exePath) > MAXPATHLEN - sizeof(XPCOM_DLL) - 1))
+  if (!lastSlash ||
+      (size_t(lastSlash - exePath) > MAXPATHLEN - sizeof(XPCOM_DLL) - 1))
     return NS_ERROR_FAILURE;
 
   strcpy(++lastSlash, XPCOM_DLL);
 
   auto bootstrapResult = mozilla::GetBootstrap(exePath, libLoadingStrategy);
-  if (bootstrapResult.isErr())
-  {
+  if (bootstrapResult.isErr()) {
     Output(true, "Couldn't load XPCOM.\n");
     return NS_ERROR_FAILURE;
   }
@@ -199,14 +193,11 @@ static nsresult initXPCOMGlue(LibLoadingStrategy libLoadingStrategy) {
   return NS_OK;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 #if defined(MOZ_ENABLE_FORKSERVER)
-  if (strcmp(argv[argc - 1], "forkserver") == 0)
-  {
+  if (strcmp(argv[argc - 1], "forkserver") == 0) {
     nsresult rv = InitXPCOMGlue(LibLoadingStrategy::NoReadAhead);
-    if (NS_FAILED(rv))
-    {
+    if (NS_FAILED(rv)) {
       return 255;
     }
 
@@ -219,8 +210,7 @@ int main(int argc, char *argv[])
     // argc & argv will be updated with the values passing from the
     // chrome process.  With the new values, this function
     // continues the reset of the code acting as a content process.
-    if (gBootstrap->XRE_ForkServer(&argc, &argv))
-    {
+    if (gBootstrap->XRE_ForkServer(&argc, &argv)) {
       // Return from the fork server in the fork server process.
       // Stop the fork server.
       gBootstrap->NS_LogTerm();
@@ -235,31 +225,32 @@ int main(int argc, char *argv[])
     // Set the process type. We don't remove the arg here as that will be done
     // later in common code.
     SetGeckoProcessType(argv[argc - 1]);
+    SetGeckoChildID(argv[--argc]);
 
-    nsresult initXPCOMGlueResult = initXPCOMGlue(LibLoadingStrategy::NoReadAhead);
+    nsresult initXPCOMGlueResult =
+        initXPCOMGlue(LibLoadingStrategy::NoReadAhead);
     if (NS_FAILED(initXPCOMGlueResult)) {
       Output(true, "Failed to load xpcom glue");
       return 255;
     }
 
-    int contentProcMainResult = content_process_main(gBootstrap.get(), argc, argv);
+    XREChildData childData;
+    nsresult contentProcMainResult =
+        gBootstrap->XRE_InitChildProcess(argc, argv, &childData);
 
     // InitXPCOMGlue calls NS_LogInit, so we need to balance it here.
     gBootstrap->NS_LogTerm();
 
-    return contentProcMainResult;
+    return NS_FAILED(contentProcMainResult) ? 1 : 0;
   }
 
-  if (argc > 1 && (IsArg(argv[1], "h") ||
-                   IsArg(argv[1], "help") ||
-                   IsArg(argv[1], "?")))
-  {
+  if (argc > 1 &&
+      (IsArg(argv[1], "h") || IsArg(argv[1], "help") || IsArg(argv[1], "?"))) {
     Usage(argv[0]);
     return 0;
   }
 
-  if (argc == 2 && (IsArg(argv[1], "v") || IsArg(argv[1], "version")))
-  {
+  if (argc == 2 && (IsArg(argv[1], "v") || IsArg(argv[1], "version"))) {
     // nsAutoCString milestone;
     // nsAutoCString version;
     // GetGREVersion(argv[0], &milestone, &version);
@@ -269,17 +260,14 @@ int main(int argc, char *argv[])
     return 0;
   }
 
-  if (argc > 1)
-  {
+  if (argc > 1) {
     // nsAutoCString milestone;
     // nsresult rv = GetGREVersion(argv[0], &milestone, nullptr);
     // if (NS_FAILED(rv))
     //   return 2;
 
-    if (IsArg(argv[1], "gre-version"))
-    {
-      if (argc != 2)
-      {
+    if (IsArg(argv[1], "gre-version")) {
+      if (argc != 2) {
         Usage(argv[0]);
         return 1;
       }
@@ -289,27 +277,23 @@ int main(int argc, char *argv[])
       return 0;
     }
 
-    if (IsArg(argv[1], "install-app"))
-    {
-      Output(true, "--install-app support has been removed.  Use 'python install-app.py' instead.\n");
+    if (IsArg(argv[1], "install-app")) {
+      Output(true, "--install-app support has been removed.  Use 'python "
+                   "install-app.py' instead.\n");
       return 1;
     }
   }
 
   const char *appDataFile = getenv("XUL_APP_FILE");
 
-  if (!(appDataFile && *appDataFile))
-  {
-    if (argc < 2)
-    {
+  if (!(appDataFile && *appDataFile)) {
+    if (argc < 2) {
       Usage(argv[0]);
       return 1;
     }
 
-    if (IsArg(argv[1], "app"))
-    {
-      if (argc == 2)
-      {
+    if (IsArg(argv[1], "app")) {
+      if (argc == 2) {
         Usage(argv[0]);
         return 1;
       }
@@ -330,13 +314,10 @@ int main(int argc, char *argv[])
 
   BootstrapConfig config;
 
-  if (appDataFile[0] != '-')
-  {
+  if (appDataFile[0] != '-') {
     config.appData = nullptr;
     config.appDataPath = appDataFile;
-  }
-  else
-  {
+  } else {
     config.appData = &sAppData;
     config.appDataPath = "quark-runtime";
   }
@@ -347,6 +328,7 @@ int main(int argc, char *argv[])
     return 255;
   }
 
+  gBootstrap->XRE_EnableSameExecutableForContentProc();
   int xreMainResult = gBootstrap->XRE_main(argc, argv, config);
 
   gBootstrap->NS_LogTerm();
