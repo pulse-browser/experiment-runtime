@@ -24,7 +24,9 @@
     gluon.exec = "pnpm gluon $@";
     download.exec = "gluon download";
     import.exec = "gluon import";
-    build.exec = "gluon build";
+    build.exec = "unset AS && gluon build";
+    # MAR generation generally fails, but we ignore that
+    package.exec = "gluon package || echo 0";
   };
 
   packages = with pkgs; [

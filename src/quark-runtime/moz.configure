@@ -4,6 +4,7 @@
 
 imply_option("MOZ_APP_BASENAME", "Experiment")
 imply_option("MOZ_APP_VENDOR", "trickypr")
+imply_option("MOZ_APP_ID", "{dda969a5-00d5-441a-8fcd-0a0dc55b490b}")
 
 # this is required to define mozilla::components::History::GetServiceHelper in objdir/xpcom/components/Components.h
 imply_option("MOZ_PLACES", True)
