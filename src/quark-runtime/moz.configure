@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 imply_option("MOZ_APP_BASENAME", "Experiment")
+imply_option("MOZ_APP_VENDOR", "trickypr")
 
 # this is required to define mozilla::components::History::GetServiceHelper in objdir/xpcom/components/Components.h
 imply_option("MOZ_PLACES", True)
