@@ -1,13 +1,31 @@
-{ pkgs, lib, config, inputs, stdenv, ... }:
+{
+  pkgs,
+  ...
+}:
 
 {
   env.LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
-  
+
   languages.c.enable = true;
   languages.cplusplus.enable = true;
   languages.rust.enable = true;
   # https://devenv.sh/reference/options/#languagesrustchannel
   languages.rust.channel = "stable";
+
+  languages.javascript = {
+    enable = true;
+    pnpm = {
+      enable = true;
+      install.enable = true;
+    };
+  };
+
+  scripts = {
+    gluon.exec = "pnpm gluon $@";
+    download.exec = "gluon download";
+    import.exec = "gluon import";
+    build.exec = "gluon build";
+  };
 
   packages = with pkgs; [
     sccache
@@ -22,50 +40,51 @@
     libclang
     gcc
 
-    libxkbcommon libdrm
+    libxkbcommon
+    libdrm
 
-# build time
- autoconf
- cargo
- dump_syms
- makeWrapper
- mimalloc
- nodejs
- perl
- pkg-config
- python3
- rustc
- rust-cbindgen
- unzip
- which
+    # build time
+    autoconf
+    cargo
+    dump_syms
+    makeWrapper
+    mimalloc
+    nodejs
+    perl
+    pkg-config
+    python3
+    rustc
+    rust-cbindgen
+    unzip
+    which
 
-# runtime
- bzip2
- dbus
- dbus-glib
- file
- fontconfig
- freetype
- glib
- gnum4
- gtk3
- icu
- icu72
-  libGL
-  libGLU
-  libevent
-  libffi
-  libjpeg
-  libpng
-  libstartup_notification
-  libvpx
-  libwebp
-  nasm
-  nspr
- nss_latest
- pango
- zip
- zlib
+    # runtime
+    bzip2
+    dbus
+    dbus-glib
+    file
+    fontconfig
+    freetype
+    glib
+    gnum4
+    gtk3
+    icu
+    icu72
+    libGL
+    libGLU
+    libevent
+    libffi
+    libjpeg
+    libpng
+    libstartup_notification
+    libvpx
+    libwebp
+    nasm
+    nspr
+    nss_latest
+    pango
+    zip
+    zlib
 
     bzip2
     dbus
