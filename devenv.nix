@@ -68,6 +68,7 @@
     fontconfig
     freetype
     glib
+    glibc
     gnum4
     gtk3
     icu
