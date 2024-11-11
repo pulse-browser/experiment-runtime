@@ -14,4 +14,4 @@ devenv.local.nix
 
 # System mozillabuild
 mozillabuild
-
+/mozconfig
