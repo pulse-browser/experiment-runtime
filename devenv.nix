@@ -6,7 +6,6 @@
 {
   env.LIBCLANG_PATH = "${pkgs.libclang.lib}/lib";
 
-  languages.c.enable = true;
   languages.cplusplus.enable = true;
   languages.rust.enable = true;
   # https://devenv.sh/reference/options/#languagesrustchannel
@@ -33,6 +32,7 @@
     sccache
     unzip
 
+    glibc
     libllvm
     libclang
     llvm
@@ -68,7 +68,6 @@
     fontconfig
     freetype
     glib
-    glibc
     gnum4
     gtk3
     icu
